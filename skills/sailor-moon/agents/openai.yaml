@@ -1,0 +1,7 @@
+interface:
+  display_name: "SailorMoon Engineering"
+  short_description: "Separate exploration, implementation, and final judgement"
+  default_prompt: "Use $sailor-moon for this engineering task."
+
+policy:
+  allow_implicit_invocation: false
