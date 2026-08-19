@@ -1,135 +1,113 @@
 ---
 name: sailor-moon
-description: Apply a parent-led engineering workflow that separates persistent repository exploration from bounded implementation while keeping architecture, scope, and final acceptance with the parent. Use only when the user explicitly asks for the SailorMoon workflow; do not use for ordinary solo engineering tasks.
+description: Apply a parent-led engineering workflow that uses persistent read-only exploration and bounded implementation workers to protect the parent context while keeping intent, decisions, and acceptance with the parent. Use only when the user explicitly asks for SailorMoon or this parent/worker workflow.
 ---
 
 # SailorMoon Engineering
 
-Use this skill only when the user explicitly chooses SailorMoon, parent/worker, or this
-specific context-optimised engineering workflow. It is deliberately not a generic
-multi-agent router.
+Use this skill only when the user explicitly chooses SailorMoon or this specific
+parent/worker workflow. It is not a generic multi-agent router.
 
-## Outcome
+## Purpose
 
-Keep the high-capability parent focused on human-context interpretation, intent,
-architecture, consequential decisions, integration judgement, and final acceptance.
-Move repository-heavy reading and one bounded implementation loop into specialised
-workers through explicit agent-to-agent contracts without delegating authority or
-weakening the final review.
+Protect the Parent's context for user intent, architecture, consequential decisions,
+integration judgement, and final acceptance. Delegate only when a worker can absorb
+meaningful repository reading, implementation churn, diagnostics, or logs. When the
+Parent already holds the complete context for a bounded change, it may implement the
+change directly.
 
-## Fixed roles
+Delegation changes where operational work happens; it never delegates authority.
 
-There are exactly three roles:
+## Roles and context
 
-1. **Parent** - owns the user conversation, user memory and prior-session history,
-   intent, material ambiguity, architecture, public contracts, scope, trade-offs,
-   integration judgement, and acceptance.
-2. **Explorer** - a persistent, read-only repository knowledge specialist. It
-   investigates, traces, retrieves, and compresses evidence; it never edits.
-3. **Implementer** - a fresh worker for one bounded, already-settled engineering
-   outcome. It inspects the local surface, implements, repairs ordinary failures,
-   self-reviews, validates proportionately, and reports.
+There are three roles:
 
-Do not add automatic reviewer, tester, router, escalation, phase, gate, or workflow
-state layers unless the user explicitly asks for them. Explorer and Implementer are
-leaf workers and must not spawn more workers.
+- **Parent** owns the user conversation, authority, material ambiguity,
+  architecture, scope, trade-offs, worker contracts, integration, and acceptance.
+- **Explorer** is one persistent read-only repository specialist. It retrieves and
+  compresses evidence for bounded questions; it never edits or approves a result.
+- **Implementer** is fresh for each delegated engineering outcome. It owns the local
+  implementation loop inside the settled contract.
 
-## Context boundary
+The Parent is both the human-agent and agent-agent boundary. It converts user
+language, corrections, relevant history, and decisions into the smallest
+role-complete worker brief. Workers use that brief, current repository evidence, and
+explicitly supplied external evidence. They do not read user memory, session or
+rollout history, the Parent conversation, or another worker's transcript, and they
+do not reconstruct user intent from those sources.
 
-The Parent is the only human-agent boundary. It interprets the user's language,
-reads any relevant user memory or prior-session history, resolves authority and
-ambiguity, and compiles that context into a role-complete worker brief.
+Workers are leaves and communicate only with the Parent. Do not add automatic
+reviewer, tester, router, escalation, phase, or workflow-state agents.
 
-Workers communicate only with the Parent. They do not read Codex memory stores,
-session or rollout history, the Parent conversation, or other user-history sources;
-they do not reconstruct or reinterpret user intent. Their context is limited to the
-Parent brief, current repository evidence, explicitly supplied external evidence,
-and - for the persistent Explorer only - repository knowledge retained in that
-Explorer thread.
+On Codex, use `sailor_moon_explorer` and `sailor_moon_implementer`. Their profiles
+pin GPT-5.6 Luna with `max` reasoning. Create workers with `fork_turns: none`; reuse
+the Explorer for later repository questions and reuse an Implementer only for repair
+of the same outcome. If the required role or controls are unavailable, report the
+limitation rather than silently substituting another workflow.
 
-Do not send the raw user conversation or ask a worker to recover missing context
-from history. Preserve exact user wording when it is itself authoritative evidence
-or a contract, such as paths, APIs, error text, or an explicit constraint. If
-material authority is missing, the worker returns the precise gap to the Parent
-through the existing decision boundary.
+## Parent loop
 
-## Interactive reasoning
+1. Establish the authority frame: observable outcome, positive requirements,
+   explicit rejections, non-goals, protected boundaries, and the validation boundary.
+2. Form the initial problem model and identify the evidence or decision gaps that
+   would change the route. Align with the user before expensive work when a wrong
+   interpretation would cause meaningful rework.
+3. Obtain only the repository evidence needed for the next decision. Inspect small
+   decisive evidence directly; use Explorer for repository-heavy retrieval.
+4. Settle material architecture, interfaces, scope, and trade-offs in the Parent.
+5. Choose the implementation location by expected context savings. Keep a narrow,
+   already-understood edit in the Parent; otherwise delegate one coherent outcome to
+   a fresh Implementer.
+6. Integrate the final repository state against the authority frame and decide
+   acceptance. A worker report, green checks, or an internally coherent diff is not
+   acceptance by itself.
 
-SailorMoon is an interactive reasoning workflow, not a one-shot dispatch pipeline.
-Before starting broad, expensive, or long-running work, the Parent forms the initial
-problem model, candidate explanations, decision criteria, and material evidence
-gaps. A cheap bounded read-only probe may ground that model. If a wrong
-interpretation would cause meaningful rework, or a real user choice remains, the
-Parent discusses it with the user before committing to the expensive branch and
-gives a recommendation rather than turning the exchange into a questionnaire.
-An explicit user request to proceed interactively is an execution constraint: do
-not batch later decision-dependent branches behind a long silent turn.
+## Delegation
 
-Delegate decision-relevant fact gaps to Explorer, not the user's end-to-end problem.
-Reuse the persistent Explorer through bounded conversational turns: each turn should
-resolve the current gap or return as soon as evidence exposes a new decision branch.
-The Parent integrates each knowledge delta, updates the model, and chooses the next
-question. A planned evidence exchange is substantive coordination, not status
-polling; do not save a few hundred communication tokens at the cost of minutes of
-avoidable investigation.
+Give Explorer the current fact gap, not the user's end-to-end problem. State the
+required claim strength: locating evidence is different from proving completeness,
+exclusivity, or absence. Explorer must qualify conclusions to its actual coverage.
+The Parent decides whether the evidence is sufficient and which question follows.
 
-## Host boundary
+Give Implementer an execution-complete contract, not a forwarded user prompt or a
+prewritten implementation. The contract must make material positive and negative
+acceptance obligations explicit. Named files are expected ownership and navigation,
+not proof of the complete implementation surface.
 
-Codex is the reference host for this package. Its intended mapping is:
+Read [references/handoffs.md](references/handoffs.md) only when preparing a worker
+brief, handling a worker decision request, or specifying report density.
 
-- Parent: the current high-reasoning Codex agent.
-- Explorer: persistent custom agent `sailor_moon_explorer`.
-- Implementer: fresh custom agent `sailor_moon_implementer`.
-- First worker creation uses the host's no-inherited-context boundary, represented
-  in Codex by `fork_turns: none`; later Explorer questions reuse the same thread.
+## Coordination
 
-The bundled TOML profiles pin the Codex Luna roles to `gpt-5.6-luna` with `max`
-reasoning. Do not silently substitute a different model when those profiles are
-available. If the host cannot provide the required named roles, model, or worker
-controls, report that limitation and preserve the role boundary instead of
-pretending that an equivalent workflow ran.
+Use worker exchanges for evidence, invalidated premises, consequential decisions,
+completed outcomes, or material blockers. Do not poll for routine progress, relay
+"still working", or copy raw search and build output into the Parent context. Wait
+silently when no action is available.
 
-On other agents, use their equivalent named-subagent mechanism only when it can
-represent the same read-only Explorer and fresh Implementer responsibilities. Keep
-the workflow's semantics, but translate command names and report transport to the
-host. Basic skill use remains valid even when Codex-specific TOML profiles are
-ignored.
+When the user explicitly asks to proceed interactively, return at material evidence
+or decision boundaries instead of batching later decision-dependent work.
 
-## Required lifecycle
+Explorer returns when the bounded gap is resolved or a consequential branch appears.
+Implementer normally owns inspect, implement, routine repair, proportionate checks,
+contract closure, self-review, and report. A consequential authority gap returns to
+the Parent before the conflicting edit. After review, the Parent may fix a small,
+fully understood defect directly or send a focused repair to the same Implementer.
 
-1. Establish the user's outcome, constraints, non-goals, material decisions,
-   relevant history, initial problem model, and decision criteria.
-2. Before expensive work, align with the user on any interpretation or choice whose
-   error would cause meaningful rework.
-3. Give the persistent Explorer the next bounded fact gap and ask for verified
-   evidence, contradictions, references, and any newly exposed decision branch.
-4. Integrate the knowledge delta in the Parent, update the model, and reuse Explorer
-   conversationally only for the next evidence gap that still matters.
-5. Settle architecture, interfaces, scope, and meaningful trade-offs in the parent.
-6. Give a fresh Implementer an execution-complete contract: authority, objective,
-   current state, scope, architecture, invariants, failure paths, non-goals,
-   validation, and its decision boundary.
-7. Let the Implementer own the local loop: inspect, validate assumptions,
-   implement, repair routine failures, run useful checks, self-review, and report.
-8. If a consequential choice is required, stop before the conflicting edit and
-   return a precise decision brief to the parent. Resume the same Implementer only
-   after the parent settles it.
-9. The parent reads the complete current final diff, not just the worker report or
-   selected hunks. Repair rounds require a new complete diff review.
-10. Report local evidence separately from user end-to-end acceptance; green checks
-   and a worker's `COMPLETE` status are not proof of real-environment success.
+## Acceptance
 
-Do not poll workers for routine progress, copy raw repository logs into the parent
-context, micro-split one coherent outcome, or use a lower-capability summary as a
-substitute for final diff inspection.
+Before accepting, the Parent re-establishes the current authority frame from the
+human conversation. User corrections replace invalidated assumptions; they are not
+legacy cases to preserve beside the new decision. Negative requirements have the
+same authority as requested features.
 
-## Detailed workflow
+The Parent personally reads the complete current diff and enough surrounding source
+to judge the integrated behavior. Compare the final state to the authority frame
+before judging code quality. Check especially for missed callers or integration
+surfaces and for old paths, compatibility, migration, or workflow behavior the user
+explicitly retired. After any repair, read the complete current diff again.
 
-Read [references/full-workflow.md](references/full-workflow.md) before applying the
-workflow to a substantive task. It contains the full invariants, Explorer brief,
-Implementer contract, decision brief, terminal report, acceptance checklist, and
-anti-patterns.
+Do not rerun a worker's successful checks solely for duplication. Repeat a check
+only when a concrete risk or later change makes the earlier evidence insufficient.
 
-The files under `agents/` are optional Codex custom-agent profiles; other hosts may
-ignore them. Their installation is a user-side setup step documented in the package
-README, not part of this skill's runtime workflow.
+Report local evidence separately from user end-to-end validation. State precisely
+which runtime, build, editor, deployed, or manual behavior remains unverified.
