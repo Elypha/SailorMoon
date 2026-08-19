@@ -30,10 +30,12 @@ This skill is designed for a GPT-5.6 Sol parent with high reasoning. Do not spen
 
 These rules are mandatory.
 
-### 1. Sol owns every consequential decision
+### 1. Sol owns human context and every consequential decision
 
 Keep in the parent Sol context:
 
+- the raw user conversation and its language noise;
+- user memory, prior-session context, rollout history, and historical preferences;
 - user intent and current constraints;
 - requirement interpretation;
 - material ambiguity resolution;
@@ -46,9 +48,71 @@ Keep in the parent Sol context:
 - final inspection of the complete implementation diff;
 - final engineering acceptance.
 
+Sol alone decides which historical facts remain authoritative, which may be stale,
+and which belong in the current engineering brief. Luna workers do not access Codex
+memory stores, session or rollout history, the parent conversation, or other
+user-history sources, even when generic context guidance suggests that memory might
+help. They do not reconstruct or reinterpret user intent.
+
+Sol supplies only the conclusions and exact authority needed for the worker's role.
+If a material authority gap remains, the worker returns that gap through the
+existing decision boundary instead of searching user history or asking the user.
+
 Luna may investigate a decision surface and recommend an answer. Luna does not become the authority merely because it has read more repository context.
 
-### 2. Explorer and Implementer are different jobs
+### 2. Sol owns decision-bearing exploration
+
+Sol does not hand the user's end-to-end problem to Explorer and wait for a finished
+answer. Before delegation, Sol forms the initial causal model, candidate
+explanations, decision criteria, and the material evidence gaps that distinguish
+those candidates.
+
+Keep in Sol:
+
+- choosing which hypotheses are plausible;
+- deciding which facts would discriminate between them;
+- judging evidence sufficiency and risk;
+- recognizing when a result invalidates the current route;
+- selecting the next branch of investigation;
+- synthesizing repository facts into product and architecture decisions.
+
+Explorer retrieves, traces, measures, and compresses repository evidence for a
+defined gap. It may explain repository implications and recommend an interpretation
+of a bounded mechanism when asked. It does not replace Sol's problem model, choose
+the overall product direction, or decide that the accumulated evidence is sufficient
+for the user's decision.
+
+Sol should personally inspect the small amount of primary evidence that dominates a
+high-risk decision. This is not permission to duplicate Explorer's broad repository
+work; it preserves the causal chain needed for authoritative judgement.
+
+### 3. Interaction prunes work before it compounds
+
+SailorMoon is interactive at both boundaries.
+
+At the human-agent boundary, Sol may perform a cheap bounded read-only probe to
+ground the discussion, but it does not silently enter a broad or long-running
+investigation when a misunderstood intent, constraint, or user choice could make
+that work largely irrelevant. Present the current model, the material choice, a
+recommendation, and the consequence; align before committing to the expensive
+branch. Do not turn this into a generic questionnaire or ask about details that are
+cheaply reversible.
+
+If the user explicitly asks to proceed interactively, treat that as an execution
+constraint. Return at material knowledge or decision boundaries instead of batching
+later decision-dependent branches into one long silent turn.
+
+At the agent-agent boundary, use the persistent Explorer as a conversation. Give it
+the current decision-relevant fact gap. When that gap is resolved, or when evidence
+invalidates a premise or exposes a consequential branch, Explorer returns the
+knowledge delta promptly. Sol integrates it and decides the next question. Do not
+bundle adjacent branches merely to avoid a few hundred tokens of coordination.
+
+This is not status polling. Routine "still working" checks and progress narration
+remain noise. Planned exchanges of evidence, changed assumptions, and decision
+branches are the mechanism that prevents minutes of avoidable work.
+
+### 4. Explorer and Implementer are different jobs
 
 Never merge their responsibilities for convenience.
 
@@ -77,9 +141,11 @@ Implementer does not become the persistent repository-memory agent.
 
 This separation is deliberate. Luna is less capable than Sol; keep each Luna thread focused on one stable cognitive role.
 
-### 3. Explorer is persistent; Implementers are fresh
+### 5. Explorer is persistent; Implementers are fresh
 
-Use one Explorer thread per active root/session when possible.
+Use one Explorer thread per active root/session when possible. Its persistence means
+repository knowledge retained inside that Explorer thread; it does not grant access
+to external user memory or prior sessions.
 
 On the first Explorer use:
 
@@ -107,7 +173,7 @@ Do not inherit the Sol conversation, Explorer conversation, or a previous implem
 
 A focused repair of the same implementation outcome should normally reuse that Implementer thread with `followup_task`, because its local implementation context is still useful.
 
-### 4. `fork_turns:none` is the default boundary
+### 6. `fork_turns:none` is the default boundary
 
 Never fork the parent conversation into a Luna worker merely for convenience.
 
@@ -115,7 +181,14 @@ The parent must provide the worker with the smallest execution-complete context 
 
 The expensive parent conversation may contain large amounts of irrelevant history. Do not purchase and distract Luna with that history.
 
-### 5. Workers are leaves
+The worker brief is an agent-to-agent contract, not a forwarded user prompt. Normalize
+the outcome, settled authority, relevant current or historical context, repository
+scope, exact questions or implementation objective, and non-goals. Preserve exact
+user wording when it is itself authoritative evidence or a contract, such as paths,
+APIs, error text, or an explicit constraint. Label historical context as such rather
+than presenting it as verified current repository state.
+
+### 7. Workers are leaves
 
 Explorer and Implementer are leaf agents.
 
@@ -136,9 +209,9 @@ User ───────────────► Sol
 
 All consequential decisions pass through Sol.
 
-### 6. Do not poll workers
+### 8. Use decision checkpoints, not status polling
 
-After assigning substantive work, do not repeatedly:
+Do not repeatedly:
 
 - list agents to see whether they are still running;
 - ask for routine progress;
@@ -146,11 +219,19 @@ After assigning substantive work, do not repeatedly:
 - request intermediate narration;
 - wake Sol just to relay “still working”.
 
-Wait for an actual worker event, user steering, completion, blocker, or decision request.
+Instead, bound Explorer turns by the current evidence gap. A completed knowledge
+delta, invalidated premise, newly exposed branch, user steering, blocker, or decision
+request is a meaningful event and should return to Sol promptly. Sol may then update
+or redirect the same persistent Explorer.
+
+Once architecture is settled, Implementer normally owns the complete local loop.
+Use an intermediate Implementer checkpoint only when the contract identifies a
+specific early uncertainty whose result would materially branch or invalidate the
+remaining work. Do not manufacture checkpoints for routine implementation.
 
 Use the longest practical native wait when waiting is required.
 
-### 7. Tests and checks are evidence, not acceptance
+### 9. Tests and checks are evidence, not acceptance
 
 Implementer should run proportionate checks that help catch ordinary breakage.
 
@@ -168,7 +249,7 @@ The final engineering judgment comes from intent, architecture, report evidence,
 
 User-performed end-to-end validation may still be required.
 
-### 8. Sol must read the complete final diff
+### 10. Sol must read the complete final diff
 
 This is the quality backstop and must not be optimized away.
 
@@ -205,15 +286,36 @@ Before delegating implementation, parent Sol must understand:
 - any architecture or interface decisions already settled;
 - what would constitute a material decision requiring Sol or user judgment.
 
+Sol also forms an initial problem model:
+
+- candidate explanations or solution directions;
+- the facts that would distinguish them;
+- the consequence of choosing the wrong branch;
+- the cheapest evidence that can safely reduce uncertainty.
+
+When relevant, Sol also reads and interprets user memory or prior-session history
+before delegation. Do not delegate that lookup. Convert only the conclusions that
+matter into explicit authority, context, constraints, or uncertainty in the worker
+brief.
+
 Do not require complete repository knowledge in Sol before using Explorer.
 
 The point of Explorer is to prevent Sol from doing broad repository archaeology itself.
+
+If resolving the remaining ambiguity requires a real user preference or would start
+a broad, expensive, or long-running branch, share the model and recommendation with
+the user first. Discussion that is inevitably required belongs before the avoidable
+work, not after it.
 
 ---
 
 ## 2. Use Explorer for repository knowledge
 
 Explorer is the default place for repository-heavy, read-only investigation.
+
+Use it iteratively. The first Explorer request should usually target the earliest
+fact gap that can eliminate candidate branches, not enumerate every question that
+might become relevant if all current assumptions survive.
 
 Use Explorer when Sol needs information such as:
 
@@ -237,14 +339,34 @@ Do not routinely duplicate Explorer discovery in the Sol context.
 
 Give Explorer:
 
-- current engineering goal;
-- known user constraints;
-- decisions already made;
+- normalized engineering goal rather than raw conversational language, while
+  preserving exact strings that are themselves evidence or contract;
+- Sol's current problem model and candidate explanations relevant to this probe,
+  explicitly labelled as hypotheses rather than repository facts;
+- settled authority and constraints;
+- relevant historical conclusions, clearly distinguished from verified current
+  repository facts;
 - exact investigation questions;
-- boundaries;
-- what evidence would materially affect Sol's decision.
+- repository and explicitly allowed external-evidence boundaries;
+- what decision each requested fact would affect;
+- the condition that should cause Explorer to return early instead of continuing
+  into adjacent branches.
+
+The brief is the Explorer's complete human-context input. Do not tell Explorer to
+inspect memory, recover the parent conversation, infer user preferences, or search
+prior sessions. Explorer may validate repository assumptions and surface a missing
+authority; it may not refill that gap from user history.
+
+Explorer treats settled decisions and constraints as authority, but it tests the
+Parent's candidate explanations and actively surfaces disconfirming or contradictory
+repository evidence. Efficient search must not become confirmation bias.
 
 Ask for a decision-ready brief rather than raw repository output.
+
+Do not ask Explorer to solve the whole user problem, choose the final product or
+architecture direction, or perform later branches whose relevance depends on the
+current result. After each brief, Sol updates the causal model and decides whether a
+follow-up is still worth doing.
 
 A useful Explorer brief contains:
 
@@ -284,7 +406,9 @@ Explorer may retain detailed repository knowledge in its own thread.
 
 Do not require it to re-explain unchanged background on every follow-up. Ask for the new answer or knowledge delta.
 
-Explorer is allowed to recommend. Sol decides.
+Explorer may recommend an interpretation of the bounded repository mechanism it was
+asked to investigate. Sol decides how that evidence changes the overall problem and
+whether more investigation is justified.
 
 ---
 
@@ -325,6 +449,12 @@ A task may touch many files if those files form one coherent outcome.
 The execution contract should contain the following sections.
 
 ```text
+AUTHORITY
+
+State the settled intent, decisions, constraints, and decision ownership compiled
+by Sol. Include only historical conclusions that materially affect this outcome,
+and label their freshness or uncertainty when relevant.
+
 OBJECTIVE
 
 Describe the observable outcome and why it matters.
@@ -390,6 +520,11 @@ Require the structured terminal report defined by this skill.
 
 Use exact references rather than pasting large source files, logs, or parent conversation history.
 
+The contract is the Implementer's complete human-context input. Do not ask it to
+read memory, prior sessions, Explorer transcripts, or the user conversation. It may
+verify current repository assumptions; it must return a material authority gap to
+Sol instead of reconstructing intent.
+
 ---
 
 ## 5. Implementer owns the full local loop
@@ -410,6 +545,11 @@ inspect relevant local repository state
 ```
 
 Routine repair stays with Implementer.
+
+If the contract names a specific early checkpoint because one unresolved repository
+fact would materially branch the implementation, Implementer validates that fact
+and returns it before the conflicting work. Otherwise, do not fragment the coherent
+local loop into conversational micro-steps.
 
 Examples that normally do **not** require waking Sol:
 
@@ -704,6 +844,7 @@ Prefer Luna for:
 
 Keep in Sol:
 
+- raw user language, memory, and prior-session history;
 - semantic summaries;
 - exact facts needed for a decision;
 - relevant authority;
@@ -714,6 +855,12 @@ Keep in Sol:
 Do not dump raw worker logs into Sol context merely because they exist.
 
 Do not repeatedly copy unchanged repository facts between turns. Reuse the persistent Explorer's context.
+
+Workers communicate with Sol, not the user. They should not emit routine progress
+narration, user-facing explanations, or conversational restatements of the brief.
+Explorer returns a completed bounded knowledge delta or a newly exposed decision
+branch; Implementer returns its terminal report, a contract-defined early checkpoint,
+a genuine consolidated decision request, or a material blocker.
 
 Optimization target:
 
@@ -750,6 +897,14 @@ If the user reports an E2E failure:
 Do not do any of the following unless the user explicitly overrides this skill:
 
 - silently implement the task in Sol after this skill was explicitly invoked;
+- treat the user's first message as an execution-complete specification when a
+  material interpretation or preference still needs alignment;
+- give Explorer the user's end-to-end problem and ask it to return the final
+  engineering answer;
+- bundle decision-dependent Explorer branches into one long investigation merely
+  to reduce agent-agent communication;
+- wait until a long investigation finishes before discussing a choice that was
+  already known to require user input;
 - invent Light / Medium / Heavy modes;
 - default back to solo execution;
 - use Terra as an escalation tier;
@@ -761,8 +916,13 @@ Do not do any of the following unless the user explicitly overrides this skill:
 - reuse Explorer as Implementer;
 - reuse an old unrelated Implementer for a new task;
 - fork parent conversation history into workers;
+- let workers read user memory, session history, rollout history, or the parent
+  conversation;
+- forward raw user prompts and ask workers to reinterpret intent;
+- ask workers to recover missing authority from historical context;
 - let workers recursively delegate;
 - poll workers for status;
+- confuse planned evidence exchange with status polling;
 - micro-split coherent work merely for parallelism;
 - distort architecture to create parallel tasks;
 - accept a worker report without examining the actual final implementation;
@@ -785,13 +945,22 @@ User explicitly invokes skill
           │
           ▼
       Parent Sol
- intent / architecture / decisions
+ human context / memory / intent
+ problem model / decision criteria
           │
-          ├──────────────► Persistent Explorer / Luna Max
-          │                 read-only repository knowledge
-          │                         │
-          │◄────────────────────────┘
-          │       decision-ready brief
+          ├──── align material intent/choice ────► User
+          │                    │
+          │◄───────────────────┘
+          │
+          ├──── bounded fact gap ─────► Persistent Explorer / Luna Max
+          │                             read-only repository evidence
+          │                    │
+          │◄── knowledge delta / branch ┘
+          │
+          ├──── update model; ask next gap only if it still matters ───┐
+          │◄───────────────────────────────────────────────────────────┘
+          │
+          │ architecture / decisions settled
           │
           │ execution-complete contract
           ▼
