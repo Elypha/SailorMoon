@@ -10,7 +10,8 @@ Give Explorer only what changes the current investigation:
 
 ```text
 QUESTION
-- The bounded repository fact gap to resolve.
+- The one bounded repository fact gap needed for the Parent's next decision.
+- Do not bundle follow-up questions whose relevance depends on this answer.
 
 MODEL
 - Relevant Parent hypotheses, clearly labelled as hypotheses rather than facts.
@@ -33,8 +34,12 @@ RETURN BOUNDARY
 
 Evaluate an Explorer result through its direct answer, cited evidence, uncertainty,
 and - for completeness or absence claims - stated coverage. `Not found` in one
-search is not proof of absence. Explorer may recommend an interpretation; the
-Parent decides what follows.
+search is not proof of absence. Explorer may explain the local meaning of repository
+evidence, but it does not define the underlying problem, choose the next question, or
+solve the Parent's problem. While Explorer is working, the Parent must not search or
+read the delegated scope in parallel. After return, the Parent decides what follows
+and may inspect cited evidence when validation is warranted. If another separable
+fact is needed, send that next gap to the same Explorer.
 
 ## Implementer contract
 

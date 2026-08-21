@@ -1,6 +1,6 @@
 ---
 name: sailor-moon
-description: Apply a parent-led engineering workflow that uses persistent read-only exploration and bounded implementation workers to protect the parent context while keeping intent, decisions, and acceptance with the parent. Use only when the user explicitly asks for SailorMoon or this parent/worker workflow.
+description: Apply a parent-led engineering workflow that uses a persistent read-only Explorer to filter repository discovery from the parent context and bounded Implementers for execution, while keeping intent, reasoning, decisions, and acceptance with the parent. Use only when the user explicitly asks for SailorMoon or this parent/worker workflow.
 ---
 
 # SailorMoon Engineering
@@ -10,13 +10,16 @@ parent/worker workflow. It is not a generic multi-agent router.
 
 ## Purpose
 
-Protect the Parent's context for user intent, architecture, consequential decisions,
-integration judgement, and final acceptance. Delegate only when a worker can absorb
-meaningful repository reading, implementation churn, diagnostics, or logs. When the
-Parent already holds the complete context for a bounded change, it may implement the
-change directly.
+Protect the Parent's context for user intent, problem solving, architecture,
+consequential decisions, integration judgement, and final acceptance. Explorer is a
+context filter: it absorbs noisy repository discovery for one Parent-chosen fact gap
+and returns compressed evidence. It does not take over the Parent's investigation or
+solve the underlying problem. Implementer instead absorbs execution churn for one
+settled outcome. When the Parent already holds the complete context for a bounded
+change, it may implement the change directly.
 
-Delegation changes where operational work happens; it never delegates authority.
+Delegation changes where evidence is acquired or execution happens; it never
+delegates problem framing, reasoning, or authority.
 
 ## Roles and context
 
@@ -25,7 +28,8 @@ There are three roles:
 - **Parent** owns the user conversation, authority, material ambiguity,
   architecture, scope, trade-offs, worker contracts, integration, and acceptance.
 - **Explorer** is one persistent read-only repository specialist. It retrieves and
-  compresses evidence for bounded questions; it never edits or approves a result.
+  compresses decision-ready evidence for the next bounded fact gap chosen by the
+  Parent; it never edits or approves a result, and does not choose the investigation.
 - **Implementer** is fresh for each delegated engineering outcome. It owns the local
   implementation loop inside the settled contract.
 
@@ -52,8 +56,13 @@ limitation rather than silently substituting another workflow.
 2. Form the initial problem model and identify the evidence or decision gaps that
    would change the route. Align with the user before expensive work when a wrong
    interpretation would cause meaningful rework.
-3. Obtain only the repository evidence needed for the next decision. Inspect small
-   decisive evidence directly; use Explorer for repository-heavy retrieval.
+3. Identify the smallest repository fact gap needed for the next decision. Before
+   reading, estimate the likely context cost of acquiring that fact. If discovery may
+   expand beyond small decisive evidence, give the gap to Explorer first; if direct
+   reading starts to expand, stop and delegate the unresolved gap. While Explorer is
+   working, do not investigate the same gap in the Parent. On return, update the
+   problem model and decide the next gap; inspect evidence when verification is
+   warranted.
 4. Settle material architecture, interfaces, scope, and trade-offs in the Parent.
 5. Choose the implementation location by expected context savings. Keep a narrow,
    already-understood edit in the Parent; otherwise delegate one coherent outcome to
@@ -64,10 +73,13 @@ limitation rather than silently substituting another workflow.
 
 ## Delegation
 
-Give Explorer the current fact gap, not the user's end-to-end problem. State the
-required claim strength: locating evidence is different from proving completeness,
-exclusivity, or absence. Explorer must qualify conclusions to its actual coverage.
-The Parent decides whether the evidence is sufficient and which question follows.
+Give Explorer one current repository fact gap, not the user's problem, a broad
+investigation, or dependent follow-up questions. Explorer may trace and interpret
+repository evidence only far enough to answer that gap. The Parent integrates the
+answer into its own reasoning and decides what question follows; when another gap is
+revealed, send a new brief to the same Explorer. State the required claim strength:
+locating evidence is different from proving completeness, exclusivity, or absence.
+Explorer must qualify conclusions to its actual coverage.
 
 Give Implementer an execution-complete contract, not a forwarded user prompt or a
 prewritten implementation. The contract must make material positive and negative
@@ -101,10 +113,12 @@ legacy cases to preserve beside the new decision. Negative requirements have the
 same authority as requested features.
 
 The Parent personally reads the complete current diff and enough surrounding source
-to judge the integrated behavior. Compare the final state to the authority frame
-before judging code quality. Check especially for missed callers or integration
-surfaces and for old paths, compatibility, migration, or workflow behavior the user
-explicitly retired. After any repair, read the complete current diff again.
+to judge the integrated behavior. It may use this review to validate Explorer
+conclusions where the final state creates a concrete concern. Compare the final state
+to the authority frame before judging code quality. Check especially for missed
+callers or integration surfaces and for old paths, compatibility, migration, or
+workflow behavior the user explicitly retired. After any repair, read the complete
+current diff again.
 
 Do not rerun a worker's successful checks solely for duplication. Repeat a check
 only when a concrete risk or later change makes the earlier evidence insufficient.
